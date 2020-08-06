@@ -6,6 +6,7 @@ class Blackjack(object):
         self.user = User()
         self.dealer = Dealer()
         self.deckOfCards = Deck()
+        self.turn = 'user'
         self.bet = 0
 
     def initate_game(self):

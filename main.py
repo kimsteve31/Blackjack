@@ -67,11 +67,11 @@ class Application(object):
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if state == 0:
                         if blue.isOver(pos):
-                            back = pygame.transform.scale(blueCard, (70, 100))
+                            back = pygame.transform.scale(blueCard, (80, 110))
                         elif gray.isOver(pos):
-                            back = pygame.transform.scale(grayCard, (70, 100))
+                            back = pygame.transform.scale(grayCard, (80, 110))
                         elif green.isOver(pos):
-                            back = pygame.transform.scale(greenCard, (70, 100))
+                            back = pygame.transform.scale(greenCard, (80, 110))
                         else:
                             break
                         state = 1
@@ -90,7 +90,7 @@ class Application(object):
                         state = 2
                         blackjack.place_bet(bet)
                         blackjack.deal_start_cards()
-                        self.deal_animation(user, dealer)
+                        self.display_first_cards(user, dealer, back)
                     elif state == 2:
                         pass
                     elif state == 3:
@@ -102,30 +102,45 @@ class Application(object):
                 slider.listen(events)
                 self.display_betting(user.balance, slider, outputText, minButton, maxButton, customButton, back)
             elif state == 2:
-                self.display_game(blackjack, user, dealer)
+                self.display_game(blackjack, user, dealer, back)
             elif state == 3:
                 pass
             pygame.display.update()
 
-    def deal_animation(self, user, dealer):
-        pass
+    def display_first_cards(self, user, dealer, back):
+        self.reset_play()
+        for i in range(5):
+            if i == 0:
+                self.win.blit(pygame.transform.scale(pygame.image.load('PNG/' + user.hand[0].icon), (80, 110)), (110, 350))
+            elif i == 1:
+                self.win.blit(back, (110, 150))
+            elif i == 2:
+                self.win.blit(pygame.transform.scale(pygame.image.load('PNG/' + user.hand[1].icon), (80, 110)), (145, 350))
+            elif i == 3:
+                self.win.blit(back, (145, 150))
+            elif i == 4:
+                self.win.blit(pygame.transform.scale(pygame.image.load('PNG/' + dealer.hand[0].icon), (80, 110)), (110, 150))
+                self.win.blit(back, (145, 150))
+            pygame.display.update()
+            pygame.time.delay(200)
 
-    def slope(self, x, y):
-        m = (-y - (-DECK_Y)) / (x - DECK_X)
-
-    def display_game(self, jack, user, dealer):
+    def reset_play(self):
         fill_board = pygame.Surface((SCREEN_WIDTH, 400))
         fill_board.fill(green)
         self.win.blit(fill_board, (0, 150))
+
+    def display_game(self, jack, user, dealer, back):
+        self.reset_play()
+
+        if jack.turn == 'user':
+            dX, dY = 110, 150
+            self.win.blit(pygame.transform.scale(pygame.image.load('PNG/' + dealer.hand[0].icon), (80, 110)), (110, 150))
+            self.win.blit(back, (145, 150))
 
         uX, uY = 110, 350
         for uCard in user.hand:
             self.win.blit(pygame.transform.scale(pygame.image.load('PNG/' + uCard.icon), (80, 110)), (uX, uY))
             uX += 35
-        dX, dY = 110, 150
-        for dCard in dealer.hand:
-            self.win.blit(pygame.transform.scale(pygame.image.load('PNG/' + dCard.icon), (80, 110)), (dX, dY))
-            dX += 35
 
     def checkHover(self, blue, gray, green, minb, maxb, cusb, pos):
         if blue.isOver(pos):
