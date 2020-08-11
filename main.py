@@ -46,6 +46,12 @@ class Application(object):
         maxButton = Button(white, 410, 400, 100, 50, 'MAX')
         customButton = Button(white, 300, 400, 100, 50, "CUSTOM")
 
+        # Buttons for Game Selection
+        hitButton = Button(white, 600, 150, 90, 50, 'HIT')
+        standButton = Button(white, 600, 250, 90, 50, 'STAND')
+        splitButton = Button(white, 600, 350, 90, 50, 'SPLIT')
+        doubleButton = Button(white, 600, 450, 90, 50, 'DOUBLE')
+
         back = ''
         state = 0
 
@@ -62,7 +68,7 @@ class Application(object):
                 if event.type == pygame.QUIT:
                     run = False
 
-                self.checkHover(blue, gray, green, minButton, maxButton, customButton, pos)
+                self.checkHover(blue, gray, green, minButton, maxButton, customButton, hitButton, standButton, splitButton, doubleButton, pos)
 
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if state == 0:
@@ -102,7 +108,7 @@ class Application(object):
                 slider.listen(events)
                 self.display_betting(user.balance, slider, outputText, minButton, maxButton, customButton, back)
             elif state == 2:
-                self.display_game(blackjack, user, dealer, back)
+                self.display_game(blackjack, user, dealer, back, hitButton, standButton, splitButton, doubleButton)
             elif state == 3:
                 pass
             pygame.display.update()
@@ -110,6 +116,7 @@ class Application(object):
     def display_first_cards(self, user, dealer, back):
         self.reset_play()
         for i in range(5):
+            pygame.time.delay(350)
             if i == 0:
                 self.win.blit(pygame.transform.scale(pygame.image.load('PNG/' + user.hand[0].icon), (80, 110)), (110, 350))
             elif i == 1:
@@ -122,14 +129,13 @@ class Application(object):
                 self.win.blit(pygame.transform.scale(pygame.image.load('PNG/' + dealer.hand[0].icon), (80, 110)), (110, 150))
                 self.win.blit(back, (145, 150))
             pygame.display.update()
-            pygame.time.delay(200)
 
     def reset_play(self):
         fill_board = pygame.Surface((SCREEN_WIDTH, 400))
         fill_board.fill(green)
         self.win.blit(fill_board, (0, 150))
 
-    def display_game(self, jack, user, dealer, back):
+    def display_game(self, jack, user, dealer, back, hit, stand, split, double):
         self.reset_play()
 
         if jack.turn == 'user':
@@ -142,7 +148,15 @@ class Application(object):
             self.win.blit(pygame.transform.scale(pygame.image.load('PNG/' + uCard.icon), (80, 110)), (uX, uY))
             uX += 35
 
-    def checkHover(self, blue, gray, green, minb, maxb, cusb, pos):
+        userScore = TextBox(self.win, 40, 380, 50, 50, fontSize=30)
+        userScore.setText(user.getHandValue())
+        userScore.draw()
+        hit.draw(self.win, True)
+        stand.draw(self.win, True)
+        split.draw(self.win, True)
+        double.draw(self.win, True)
+
+    def checkHover(self, blue, gray, green, minb, maxb, cusb, hit, stand, split, double, pos):
         if blue.isOver(pos):
             blue.changeColor()
         elif gray.isOver(pos):
@@ -164,6 +178,20 @@ class Application(object):
             minb.revertBetColor()
             maxb.revertBetColor()
             cusb.revertBetColor()
+
+        if hit.isOver(pos):
+            hit.changeColor()
+        elif stand.isOver(pos):
+            stand.changeColor()
+        elif split.isOver(pos):
+            split.changeColor()
+        elif double.isOver(pos):
+            double.changeColor()
+        else:
+            hit.revertBetColor()
+            stand.revertBetColor()
+            split.revertBetColor()
+            double.revertBetColor()
 
     def fade(self):
         fade = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))

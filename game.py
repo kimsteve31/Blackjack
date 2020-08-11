@@ -21,7 +21,19 @@ class Blackjack(object):
         self.user.addCard(self.deckOfCards.removeTop())
         self.dealer.addCard(self.deckOfCards.removeTop())
 
-    def calculate_SCORE(self, user=True, deaer=False):
+    def hit(self):
+        pass
+
+    def can_hit(self):
+        pass
+
+    def stand(self):
+        pass
+
+    def can_split(self):
+        pass
+
+    def split(self):
         pass
 
 
