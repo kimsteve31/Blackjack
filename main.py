@@ -98,23 +98,31 @@ class Application(object):
                         blackjack.deal_start_cards()
                         self.display_first_cards(user, dealer, back)
                     elif state == 2:
-                        pass
-                    elif state == 3:
-                        pass
+                        if hitButton.isOver(pos):
+                            blackjack.hit()
+                        elif standButton.isOver(pos):
+                            pass
+                        elif doubleButton.isOver(pos):
+                            pass
+                        elif splitButton.isOver(pos):
+                            pass
+                        else:
+                            break
 
             if state == 0:
                 self.display_homescreen(blue, gray, green)
             elif state == 1:
                 slider.listen(events)
+                self.display_status_bar(state)
                 self.display_betting(user.balance, slider, outputText, minButton, maxButton, customButton, back)
             elif state == 2:
+                self.display_status_bar(2)
                 self.display_game(blackjack, user, dealer, back, hitButton, standButton, splitButton, doubleButton)
-            elif state == 3:
-                pass
             pygame.display.update()
 
     def display_first_cards(self, user, dealer, back):
         self.reset_play()
+        self.balance(user)
         for i in range(5):
             pygame.time.delay(350)
             if i == 0:
@@ -133,10 +141,25 @@ class Application(object):
     def reset_play(self):
         fill_board = pygame.Surface((SCREEN_WIDTH, 400))
         fill_board.fill(green)
+        fill_balance = pygame.Surface((SCREEN_WIDTH // 3, 100))
+        fill_balance.fill(green)
+        self.win.blit(fill_balance, (0, 600))
         self.win.blit(fill_board, (0, 150))
 
+    def balance(self, user):
+        font = pygame.font.SysFont('comicsans', 30)
+        text = font.render('$ ' + str(user.balance), 1, yellow)
+        bal_text = font.render('BALANCE: ', 1, black)
+        self.win.blit(bal_text, (10, 670))
+        self.win.blit(text, (bal_text.get_width() + 10, 670))
+
+    def display_status_bar(self, state):
+        pass
+
     def display_game(self, jack, user, dealer, back, hit, stand, split, double):
+
         self.reset_play()
+        self.balance(user)
 
         if jack.turn == 'user':
             dX, dY = 110, 150
@@ -148,13 +171,26 @@ class Application(object):
             self.win.blit(pygame.transform.scale(pygame.image.load('PNG/' + uCard.icon), (80, 110)), (uX, uY))
             uX += 35
 
-        userScore = TextBox(self.win, 40, 380, 50, 50, fontSize=30)
-        userScore.setText(user.getHandValue())
-        userScore.draw()
+        self.display_user_score(user)
+
         hit.draw(self.win, True)
         stand.draw(self.win, True)
         split.draw(self.win, True)
         double.draw(self.win, True)
+
+    def display_user_score(self, user):
+        userScore = TextBox(self.win, 10, 380, 90, 50, fontSize=30)
+        score = user.getHandValue()
+        if not user.hasAce():
+            userScore.setText(score[0])
+        elif score[0] < 22 and score[1] < 22:
+            userScore.setText(str(score[0]) + '/' + str(score[1]))
+        elif score[0] > 21 and score[1] > 21:
+            userScore.setText(score[0])
+        else:
+            userScore.setText(score[0])
+
+        userScore.draw()
 
     def checkHover(self, blue, gray, green, minb, maxb, cusb, hit, stand, split, double, pos):
         if blue.isOver(pos):
