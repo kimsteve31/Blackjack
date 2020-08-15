@@ -32,6 +32,11 @@ class Deck(object):
             replace = randrange(index+1)
             self.shoe[index], self.shoe[replace] = self.shoe[replace], self.shoe[index]
 
+    def collect_cards(self, user, dealer):
+        self.shield += user
+        self.shield += dealer
+        self.reshuffle()
+
     def addToTop(self, addCard):
         """
         The top is referenced at the end of the card stack
@@ -54,10 +59,10 @@ class Deck(object):
         return len(self.shield)
 
     def reshuffle(self):
-        if self.getShieldSize() + self.getShoeSize() == deckSize:
-            if self.getShieldSize() == (208 // 2):
-                self.shoe.extend(self.shield)
-                self.shield = []
+        if self.getShieldSize() + self.getShoeSize() == deckSize and self.getShieldSize() >= (208 // 2):
+            self.shoe.extend(self.shield)
+            self.shuffle()
+            self.shield = []
 
 
 """

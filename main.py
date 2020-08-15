@@ -113,12 +113,20 @@ class Application(object):
                 self.display_homescreen(blue, gray, green)
             elif state == 1:
                 slider.listen(events)
-                self.display_status_bar(state)
+                blackjack.new_game()
                 self.display_betting(user.balance, slider, outputText, minButton, maxButton, customButton, back)
             elif state == 2:
-                self.display_status_bar(2)
                 self.display_game(blackjack, user, dealer, back, hitButton, standButton, splitButton, doubleButton)
+                blackjack.check_win()
+                self.display_status(blackjack)
             pygame.display.update()
+
+            if blackjack.get_status() != 'user':
+                state = 1
+                self.display_status(blackjack)
+                blackjack.reset_game()
+                pygame.time.delay(1500)
+
 
     def display_first_cards(self, user, dealer, back):
         self.reset_play()
@@ -153,18 +161,33 @@ class Application(object):
         self.win.blit(bal_text, (10, 670))
         self.win.blit(text, (bal_text.get_width() + 10, 670))
 
-    def display_status_bar(self, state):
-        pass
+    def display_status(self, blackjack):
+        fill_status = pygame.Surface((300, 100))
+        fill_status.fill(green)
+        self.win.blit(fill_status, (290, 0))
+        font = pygame.font.SysFont('comicsans', 30)
+
+        turn = blackjack.turn
+        if turn == 'user':
+            text = font.render('Waiting on User Input', 1, black)
+        elif turn == 'over' or turn == 'reset':
+            text = font.render('BUSTED! Dealer Wins', 1, black)
+        elif turn == 'BLACKJACK':
+            text = font.render('BLACKJACK! User Wins', 1, black)
+        else:
+            text = font.render('Dealer\'s Turn', 1, black)
+        self.win.blit(text, (300, 35))
 
     def display_game(self, jack, user, dealer, back, hit, stand, split, double):
-
         self.reset_play()
         self.balance(user)
 
-        if jack.turn == 'user':
+        if jack.get_status() == 'user':
             dX, dY = 110, 150
             self.win.blit(pygame.transform.scale(pygame.image.load('PNG/' + dealer.hand[0].icon), (80, 110)), (110, 150))
             self.win.blit(back, (145, 150))
+        elif jack.get_status() == 'dealer':
+            pass
 
         uX, uY = 110, 350
         for uCard in user.hand:

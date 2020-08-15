@@ -45,4 +45,4 @@ class Dealer(Profile):
         super().__init__()
 
     def stopPlaying(self):
-        return self.getHandValue() >= 17
+        return self.getHandValue()[0] >= 17
