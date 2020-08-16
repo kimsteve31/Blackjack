@@ -12,19 +12,28 @@ class Blackjack(object):
     def initate_game(self):
         self.deckOfCards.shuffle()
 
-    def place_bet(self, bet):
-        self.bet = bet
+    def place_bet(self, bet, double=False):
         self.user.place_bet(bet)
+        if double:
+            bet = bet * 2
+        self.bet = bet
+
+    def get_pot(self):
+        return self.bet
 
     def handle_payout(self):
-        if self.get_status() == 'BLACKJACK':
+        stat = self.get_status()
+        if stat == 'BLACKJACK' or stat == 'won' or stat == 'dealerbust':
             self.user.add_money(self.bet * 2)
             self.bet = 0
+
+    def lost_bet(self):
+        self.bet = 0
 
     def reset_game(self):
         self.deckOfCards.collect_cards(self.user.hand, self.dealer.hand)
         self.user.hand, self.dealer.hand = [], []
-        self.turn = 'reset'
+        self.set_status('reset')
 
     def deal_start_cards(self):
         self.user.addCard(self.deckOfCards.removeTop())
@@ -37,31 +46,52 @@ class Blackjack(object):
             self.user.addCard(self.deckOfCards.removeTop())
             self.check_Busted()
             if double:
-                self.turn = 'dealer'
+                self.set_status('dealer')
+                self.place_bet(self.bet, True)
 
-    def new_game(self):
-        self.turn = 'user'
-
-    def check_Busted(self):
-        if self.user.getHandValue()[0] > 21:
-            self.turn = 'over'
-        else:
-            self.turn = 'user'
-
-    def check_win(self):
-        score = self.user.getHandValue()
-        if score[0] == 21 or score[1] == 21:
-            self.turn = 'BLACKJACK'
-            self.handle_payout()
+    def set_status(self, status):
+        self.turn = status
 
     def get_status(self):
         return self.turn
+
+    def check_Busted(self):
+        if self.user.getHandValue()[0] > 21:
+            self.set_status('over')
+        else:
+            self.set_status('user')
+
+    def check_blackjack(self):
+        score = self.user.getHandValue()
+        if score[0] == 21 or score[1] == 21:
+            self.set_status('BLACKJACK')
+            self.handle_payout()
+
+    def compare_score(self):
+        user_score = self.user.getHandValue()
+        dealer_score = self.dealer.getHandValue()
+        if dealer_score > 21:
+            return True
+        elif user_score[1] > 21:
+            return user_score[0] > dealer_score
+        else:
+            return user_score[1] > dealer_score
 
     def double(self):
         self.hit(True)
 
     def stand(self):
-        self.turn = 'dealer'
+        self.set_status('dealer')
+
+    def dealer_play(self):
+        if self.dealer.getHandValue() <= 16:
+            self.dealer.addCard(self.deckOfCards.removeTop())
+
+    def dealer_draw(self):
+        return self.dealer.getHandValue() > 16
+
+    def dealer_bust(self):
+        return self.dealer.getHandValue() > 21
 
     def split(self):
         pass

@@ -44,5 +44,20 @@ class Dealer(Profile):
     def __init__(self):
         super().__init__()
 
-    def stopPlaying(self):
-        return self.getHandValue()[0] >= 17
+    def getHandValue(self):
+        ace = False
+        value = 0
+        for card in self.hand:
+            if card.rank == 1:
+                if not ace:
+                    ace = True
+                    value += 11
+                else:
+                    value += 1
+            else:
+                value += card.getCardValue()
+        self.value = value
+        return value
+
+
+

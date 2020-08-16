@@ -96,14 +96,14 @@ class Application(object):
                         state = 2
                         blackjack.place_bet(bet)
                         blackjack.deal_start_cards()
-                        self.display_first_cards(user, dealer, back)
+                        self.display_first_cards(user, dealer, back, blackjack)
                     elif state == 2:
                         if hitButton.isOver(pos):
                             blackjack.hit()
                         elif standButton.isOver(pos):
-                            pass
+                            blackjack.stand()
                         elif doubleButton.isOver(pos):
-                            pass
+                            blackjack.double()
                         elif splitButton.isOver(pos):
                             pass
                         else:
@@ -113,24 +113,47 @@ class Application(object):
                 self.display_homescreen(blue, gray, green)
             elif state == 1:
                 slider.listen(events)
-                blackjack.new_game()
+                blackjack.set_status('user')
                 self.display_betting(user.balance, slider, outputText, minButton, maxButton, customButton, back)
             elif state == 2:
                 self.display_game(blackjack, user, dealer, back, hitButton, standButton, splitButton, doubleButton)
-                blackjack.check_win()
                 self.display_status(blackjack)
-            pygame.display.update()
 
-            if blackjack.get_status() != 'user':
+            stat = blackjack.get_status()
+            if stat == 'user':
+                blackjack.check_blackjack()
+            elif stat == 'dealer':
+                self.display_status(blackjack)
+                self.dealer_turn(blackjack)
+            elif stat == 'reset' or stat == 'over' or stat == 'dealerbust' or stat == 'won' or stat == 'lost':
                 state = 1
                 self.display_status(blackjack)
+                pygame.display.update()
                 blackjack.reset_game()
-                pygame.time.delay(1500)
+                pygame.time.delay(2500)
+
+            pygame.display.update()
+
+    def dealer_turn(self, blackjack):
+        pygame.time.delay(1000)
+        if not blackjack.dealer_draw():
+            blackjack.dealer_play()
+        elif blackjack.dealer_bust():
+            blackjack.set_status('dealerbust')
+            blackjack.handle_payout()
+        else:
+            decide = blackjack.compare_score()
+            if decide:
+                blackjack.set_status('won')
+                blackjack.handle_payout()
+            else:
+                blackjack.set_status('lost')
+                blackjack.lost_bet()
 
 
-    def display_first_cards(self, user, dealer, back):
+    def display_first_cards(self, user, dealer, back, blackjack):
         self.reset_play()
-        self.balance(user)
+        self.balance(user, blackjack)
         for i in range(5):
             pygame.time.delay(350)
             if i == 0:
@@ -154,12 +177,16 @@ class Application(object):
         self.win.blit(fill_balance, (0, 600))
         self.win.blit(fill_board, (0, 150))
 
-    def balance(self, user):
+    def balance(self, user, blackjack):
         font = pygame.font.SysFont('comicsans', 30)
-        text = font.render('$ ' + str(user.balance), 1, yellow)
+        text_bal = font.render('$ ' + str(user.balance), 1, yellow)
+        text_pot = font.render('$ ' + str(blackjack.get_pot()), 1, yellow)
         bal_text = font.render('BALANCE: ', 1, black)
+        pot_text = font.render('TOTAL BET: ', 1, black)
+        self.win.blit(pot_text, (10, 650))
+        self.win.blit(text_pot, (pot_text.get_width() + 10, 650))
         self.win.blit(bal_text, (10, 670))
-        self.win.blit(text, (bal_text.get_width() + 10, 670))
+        self.win.blit(text_bal, (bal_text.get_width() + 10, 670))
 
     def display_status(self, blackjack):
         fill_status = pygame.Surface((300, 100))
@@ -174,20 +201,28 @@ class Application(object):
             text = font.render('BUSTED! Dealer Wins', 1, black)
         elif turn == 'BLACKJACK':
             text = font.render('BLACKJACK! User Wins', 1, black)
-        else:
+        elif turn == 'dealer':
             text = font.render('Dealer\'s Turn', 1, black)
+        elif turn == 'won':
+            text = font.render('User Wins!', 1, black)
+        elif turn == 'lost':
+            text = font.render('Dealer Wins!', 1, black)
+        elif turn == 'dealerbust':
+            text = font.render('Dealer BUSTED! User Wins!', 1, black)
         self.win.blit(text, (300, 35))
 
     def display_game(self, jack, user, dealer, back, hit, stand, split, double):
         self.reset_play()
-        self.balance(user)
+        self.balance(user, jack)
 
+        dX, dY = 110, 150
         if jack.get_status() == 'user':
-            dX, dY = 110, 150
             self.win.blit(pygame.transform.scale(pygame.image.load('PNG/' + dealer.hand[0].icon), (80, 110)), (110, 150))
             self.win.blit(back, (145, 150))
-        elif jack.get_status() == 'dealer':
-            pass
+        else:
+            for dCard in dealer.hand:
+                self.win.blit(pygame.transform.scale(pygame.image.load('PNG/' + dCard.icon), (80, 110)), (dX, dY))
+                dX += 35
 
         uX, uY = 110, 350
         for uCard in user.hand:
@@ -195,6 +230,8 @@ class Application(object):
             uX += 35
 
         self.display_user_score(user)
+        if jack.get_status() != 'user':
+            self.display_dealer_score(dealer)
 
         hit.draw(self.win, True)
         stand.draw(self.win, True)
@@ -214,6 +251,12 @@ class Application(object):
             userScore.setText(score[0])
 
         userScore.draw()
+
+    def display_dealer_score(self, dealer):
+        dealerScore = TextBox(self.win, 10, 180, 90, 50, fontSize=30)
+        score = dealer.getHandValue()
+        dealerScore.setText(score)
+        dealerScore.draw()
 
     def checkHover(self, blue, gray, green, minb, maxb, cusb, hit, stand, split, double, pos):
         if blue.isOver(pos):
